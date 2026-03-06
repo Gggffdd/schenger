@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+
+body{
+margin:0;
+background:#0f172a;
+color:white;
+font-family:Inter,system-ui;
+}
+
+.header{
+font-size:26px;
+font-weight:700;
+margin-bottom:20px;
+}
+
+.container{
+padding:20px;
+}
+
+.card{
+background:#1e293b;
+border-radius:20px;
+padding:20px;
+margin-bottom:20px;
+box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+.balance{
+font-size:34px;
+font-weight:700;
+}
+
+button{
+
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+border:none;
+padding:14px;
+border-radius:12px;
+width:100%;
+margin-top:10px;
+color:white;
+font-size:16px;
+cursor:pointer;
+
+}
+
+input{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:none;
+margin-top:10px;
+}
+
+.nav{
+
+position:fixed;
+bottom:0;
+width:100%;
+display:flex;
+background:#020617;
+
+}
+
+.nav button{
+
+flex:1;
+background:none;
+font-size:20px;
+
+}
+
+.avatar{
+width:80px;
+height:80px;
+border-radius:50%;
+margin-bottom:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container" id="app"></div>
+
+<div class="nav">
+
+<button onclick="profile()">👤</button>
+<button onclick="exchange()">💱</button>
+<button onclick="promo()">🎁</button>
+<button onclick="admin()">⚙️</button>
+
+</div>
+
+<script>
+
+const tg = window.Telegram.WebApp
+const user = tg.initDataUnsafe.user
+
+const uid = user.id
+const username = user.username
+
+async function api(url,data){
+
+let r = await fetch(url,{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify(data)
+})
+
+return r.json()
+
+}
+
+async function profile(){
+
+let r = await fetch(`/api/user?id=${uid}&username=${username}`)
+let u = await r.json()
+
+app.innerHTML=`
+
+<div class="header">Профиль</div>
+
+<div class="card">
+
+<img class="avatar"
+src="https://t.me/i/userpic/320/${username}.jpg">
+
+<div>@${username}</div>
+
+<div class="balance">${u.balance} USD</div>
+
+</div>
+
+`
+
+}
+
+async function exchange(){
+
+app.innerHTML=`
+
+<div class="header">Обменник</div>
+
+<div class="card">
+
+<input id="amount" placeholder="Amount">
+
+<button onclick="doExchange()">Exchange</button>
+
+</div>
+
+`
+
+}
+
+async function doExchange(){
+
+let amount=document.getElementById("amount").value
+
+await api("/api/exchange",{
+id:uid,
+amount:amount
+})
+
+profile()
+
+}
+
+async function promo(){
+
+app.innerHTML=`
+
+<div class="header">Промокод</div>
+
+<div class="card">
+
+<input id="code" placeholder="Promo">
+
+<button onclick="activate()">Activate</button>
+
+</div>
+
+`
+
+}
+
+async function activate(){
+
+let code=document.getElementById("code").value
+
+await api("/api/promo",{
+id:uid,
+code:code
+})
+
+profile()
+
+}
+
+async function admin(){
+
+if(uid!=896706118){
+
+app.innerHTML="Access denied"
+return
+
+}
+
+app.innerHTML=`
+
+<div class="header">Admin</div>
+
+<div class="card">
+
+<input id="pcode" placeholder="Code">
+<input id="pamount" placeholder="Amount">
+<input id="puses" placeholder="Uses">
+
+<button onclick="createPromo()">Create promo</button>
+
+</div>
+
+`
+
+}
+
+async function createPromo(){
+
+await api("/api/admin/createpromo",{
+
+admin:uid,
+code:pcode.value,
+amount:pamount.value,
+uses:puses.value
+
+})
+
+alert("created")
+
+}
+
+profile()
+
+</script>
+
+</body>
+</html>
