@@ -1,9 +1,0 @@
-{
-  "routes": [
-    { "src": "/user/(.*)", "dest": "/api/miniapp_api.py" },
-    { "src": "/rates", "dest": "/api/miniapp_api.py" },
-    { "src": "/exchange", "dest": "/api/miniapp_api.py" },
-    { "src": "/webapp.js", "dest": "/webapp.js" },
-    { "src": "/", "dest": "/webapp.html" }
-  ]
-}
