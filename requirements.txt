@@ -1,2 +1,6 @@
 flask
 requests
+gunicorn
+python-telegram-bot==20.3
+psycopg2-binary
+python-dotenv
