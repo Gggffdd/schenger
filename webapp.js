@@ -1,3 +1,5 @@
+const API = "https://schenger.vercel.app"
+
 const tg = window.Telegram.WebApp
 tg.expand()
 
@@ -11,7 +13,7 @@ document.getElementById("uid").innerText = user.id
 
 async function load(){
 
-let r = await fetch("/user/"+user.id)
+let r = await fetch(API+"/user/"+user.id)
 let d = await r.json()
 
 rub.innerText = d.rub
@@ -29,7 +31,7 @@ let amount = document.getElementById("amount").value
 let from = document.getElementById("from").value
 let to = document.getElementById("to").value
 
-let r = await fetch("/exchange",{
+let r = await fetch(API+"/exchange",{
 
 method:"POST",
 headers:{"Content-Type":"application/json"},
