@@ -1,14 +1,9 @@
 {
-  "builds": [
-    {
-      "src": "miniapp_api.py",
-      "use": "@vercel/python"
-    }
-  ],
   "routes": [
-    { "src": "/user/(.*)", "dest": "miniapp_api.py" },
-    { "src": "/rates", "dest": "miniapp_api.py" },
-    { "src": "/exchange", "dest": "miniapp_api.py" },
+    { "src": "/user/(.*)", "dest": "/api/miniapp_api.py" },
+    { "src": "/rates", "dest": "/api/miniapp_api.py" },
+    { "src": "/exchange", "dest": "/api/miniapp_api.py" },
+    { "src": "/webapp.js", "dest": "/webapp.js" },
     { "src": "/", "dest": "/webapp.html" }
   ]
 }
