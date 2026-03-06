@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "miniapp_api.py": {
+      "runtime": "python3.9"
+    }
+  },
+  "routes": [
+    { "src": "/user/(.*)", "dest": "miniapp_api.py" },
+    { "src": "/rates", "dest": "miniapp_api.py" },
+    { "src": "/exchange", "dest": "miniapp_api.py" }
+  ]
+}
