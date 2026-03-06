@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideal Exchange</title>
+    <!-- Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --primary: #3b82f6;
+            --primary-glow: #6366f1;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border-radius: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 80px; /* для нижней навигации */
+        }
+
+        /* Контейнер с анимацией появления */
+        .app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Карточки */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        /* Заголовки */
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Аватар */
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+            margin-bottom: 16px;
+            transition: var(--transition);
+        }
+
+        .avatar:hover {
+            transform: scale(1.05);
+            border-color: var(--primary-glow);
+        }
+
+        /* Баланс */
+        .balance {
+            font-size: 42px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            margin: 10px 0;
+        }
+
+        .balance small {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: none;
+        }
+
+        /* Кнопки — главное улучшение */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 60px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-glow));
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+            margin: 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #475569, #334155);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        /* Поля ввода */
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 60px;
+            color: var(--text);
+            font-size: 16px;
+            transition: var(--transition);
+            margin: 8px 0;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Нижняя навигация */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #020617;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 16px;
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            padding: 8px 16px;
+            border-radius: 40px;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-item span {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .nav-item:hover {
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Сетка для истории */
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-type {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .history-amount {
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .history-amount.negative {
+            color: var(--danger);
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Уведомления */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            color: var(--text);
+            padding: 16px 24px;
+            border-radius: 60px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-left: 5px solid var(--primary);
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        @keyframes slideDown {
+            from { top: -50px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 480px) {
+            .app-container { padding: 16px; }
+            .balance { font-size: 36px; }
+            .btn { padding: 14px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container" id="app"></div>
+    <div class="nav-bar" id="navBar"></div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Растягиваем на весь экран
+        tg.enableClosingConfirmation(); // Подтверждение закрытия
+
+        const user = tg.initDataUnsafe.user;
+        if (!user) {
+            alert('Ошибка: не удалось получить данные пользователя');
+        }
+
+        const uid = user.id;
+        const username = user.username || 'user';
+
+        // Глобальные переменные
+        let currentPage = 'profile';
+        let rates = {};
+
+        // Элементы
+        const app = document.getElementById('app');
+        const navBar = document.getElementById('navBar');
+
+        // Функция для отображения уведомлений
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.borderLeftColor = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : '#3b82f6');
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Универсальный fetch с обработкой ошибок
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const url = `/api/${endpoint}`;
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            try {
+                const res = await fetch(url, options);
+                const json = await res.json();
+                if (json.error) {
+                    showToast(json.error, 'error');
+                    return null;
+                }
+                return json;
+            } catch (err) {
+                showToast('Network error', 'error');
+                console.error(err);
+                return null;
+            }
+        }
+
+        // Загрузка курсов валют (один раз при старте)
+        async function loadRates() {
+            const data = await apiCall('rates');
+            if (data) rates = data;
+        }
+        loadRates();
+
+        // Рендер навигации
+        function renderNav() {
+            const pages = [
+                { id: 'profile', icon: 'fas fa-user', label: 'Профиль' },
+                { id: 'exchange', icon: 'fas fa-exchange-alt', label: 'Обмен' },
+                { id: 'promo', icon: 'fas fa-gift', label: 'Промо' },
+                { id: 'history', icon: 'fas fa-history', label: 'История' },
+                { id: 'referrals', icon: 'fas fa-users', label: 'Рефералы' }
+            ];
+            if (uid === 896706118) {
+                pages.push({ id: 'admin', icon: 'fas fa-cog', label: 'Админ' });
+            }
+            navBar.innerHTML = pages.map(p => `
+                <button class="nav-item ${currentPage === p.id ? 'active' : ''}" onclick="navigate('${p.id}')">
+                    <i class="${p.icon}"></i>
+                    <span>${p.label}</span>
+                </button>
+            `).join('');
+        }
+
+        // Навигация
+        window.navigate = (page) => {
+            currentPage = page;
+            renderNav();
+            renderPage();
+        };
+
+        // Рендер текущей страницы
+        async function renderPage() {
+            switch (currentPage) {
+                case 'profile': await renderProfile(); break;
+                case 'exchange': renderExchange(); break;
+                case 'promo': renderPromo(); break;
+                case 'history': await renderHistory(); break;
+                case 'referrals': await renderReferrals(); break;
+                case 'admin': if (uid === 896706118) await renderAdmin(); else navigate('profile'); break;
+                default: await renderProfile();
+            }
+        }
+
+        // ---- Профиль ----
+        async function renderProfile() {
+            const data = await apiCall(`user?id=${uid}&username=${username}`);
+            if (!data) return;
+
+            app.innerHTML = `
+                <div class="card" style="text-align: center;">
+                    <img class="avatar" src="https://t.me/i/userpic/320/${username}.jpg" onerror="this.src='https://via.placeholder.com/80'">
+                    <h2>@${username}</h2>
+                    <div class="balance">${data.balance_usd.toFixed(2)} <small>USD</small></div>
+                    ${data.daily_bonus_available ? '<button class="btn btn-success" onclick="claimDailyBonus()"><i class="fas fa-calendar-check"></i> Ежедневный бонус</button>' : ''}
+                    <div style="margin-top: 20px; text-align: left;">
+                        <p><i class="fas fa-link"></i> Реферальная ссылка:</p>
+                        <input class="input-field" type="text" value="${data.referral_link}" readonly onclick="this.select()">
+                    </div>
+                </div>
+            `;
+        }
+
+        window.claimDailyBonus = async () => {
+            const res = await apiCall('daily_bonus', 'POST', { id: uid });
+            if (res) {
+                showToast(`Получено ${res.amount} USD`, 'success');
+                renderProfile();
+            }
+        };
+
+        // ---- Обмен ----
+        function renderExchange() {
+            const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'RUB', 'CNY'];
+            app.innerHTML = `
+                <div class="page-title">Обмен валюты</div>
+                <div class="card">
+                    <div style="display: flex; gap: 10px;">
+                        <select id="fromCurrency" class="input-field" style="flex:1;">
+                            ${currencies.map(c => `<option value="${c}" ${c === 'USD' ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                        <i class="fas fa-arrow-right" style="align-self: center; color: var(--primary);"></i>
+                        <select id="toCurrency" class="input-field" style="flex:1;">
+                            ${currencies.map(c => `<option value="${c}" ${c === 'EUR' ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                    </div>
+                    <input id="amount" type="number" class="input-field" placeholder="Сумма" min="0.01" step="0.01">
+                    <div id="convertResult" style="margin: 10px 0; font-size: 18px; color: var(--success);"></div>
+                    <button class="btn" onclick="convertPreview()"><i class="fas fa-sync-alt"></i> Предварительный расчёт</button>
+                    <button class="btn btn-success" onclick="doExchange()"><i class="fas fa-exchange-alt"></i> Выполнить обмен</button>
+                </div>
+            `;
+        }
+
+        window.convertPreview = async () => {
+            const from = document.getElementById('fromCurrency').value;
+            const to = document.getElementById('toCurrency').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            if (!amount || amount <= 0) {
+                showToast('Введите корректную сумму', 'error');
+                return;
+            }
+            const res = await apiCall('convert', 'POST', { from, to, amount });
+            if (res) {
+                document.getElementById('convertResult').innerHTML = `${amount} ${from} = ${res.result} ${to}`;
+            }
+        };
+
+        window.doExchange = async () => {
+            const from = document.getElementById('fromCurrency').value;
+            const to = document.getElementById('toCurrency').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            if (!amount || amount <= 0) {
+                showToast('Введите сумму', 'error');
+                return;
+            }
+            const res = await apiCall('exchange', 'POST', { id: uid, from, to, amount });
+            if (res) {
+                showToast(`Обмен выполнен! Новый баланс: ${res.new_balance.toFixed(2)} USD`, 'success');
+                navigate('profile');
+            }
+        };
+
+        // ---- Промокоды ----
+        function renderPromo() {
+            app.innerHTML = `
+                <div class="page-title">Активация промокода</div>
+                <div class="card">
+                    <input id="promoCode" class="input-field" placeholder="Введите промокод">
+                    <button class="btn" onclick="activatePromo()"><i class="fas fa-ticket-alt"></i> Активировать</button>
+                </div>
+            `;
+        }
+
+        window.activatePromo = async () => {
+            const code = document.getElementById('promoCode').value.trim().toUpperCase();
+            if (!code) {
+                showToast('Введите код', 'error');
+                return;
+            }
+            const res = await apiCall('promo', 'POST', { id: uid, code });
+            if (res) {
+                showToast(`Промокод активирован! +${res.amount} USD`, 'success');
+                navigate('profile');
+            }
+        };
+
+        // ---- История ----
+        async function renderHistory() {
+            const history = await apiCall(`history?id=${uid}&limit=30`);
+            if (!history) return;
+
+            app.innerHTML = `
+                <div class="page-title">История операций</div>
+                <div class="card">
+                    ${history.length === 0 ? '<p>Пока нет операций</p>' : history.map(h => `
+                        <div class="history-item">
+                            <div>
+                                <div class="history-type">${h.type === 'exchange' ? '💱 Обмен' : (h.type === 'promo' ? '🎁 Промокод' : (h.type === 'daily_bonus' ? '📅 Бонус' : '👥 Реферал'))}</div>
+                                <div class="history-date">${new Date(h.date).toLocaleString()}</div>
+                            </div>
+                            <div class="history-amount ${h.amount < 0 ? 'negative' : ''}">${h.amount > 0 ? '+' : ''}${h.amount.toFixed(2)} USD</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // ---- Рефералы ----
+        async function renderReferrals() {
+            const stats = await apiCall(`referrals?id=${uid}`);
+            if (!stats) return;
+
+            app.innerHTML = `
+                <div class="page-title">Реферальная программа</div>
+                <div class="card" style="text-align: center;">
+                    <p><i class="fas fa-user-friends" style="font-size: 48px; color: var(--primary);"></i></p>
+                    <p>Приглашено друзей: <strong>${stats.count}</strong></p>
+                    <p>Заработано бонусов: <strong>${stats.total_bonus.toFixed(2)} USD</strong></p>
+                    <p style="margin-top: 20px;">Ваша ссылка:</p>
+                    <input class="input-field" type="text" value="https://t.me/your_bot?start=${uid}" readonly onclick="this.select()">
+                    <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('https://t.me/your_bot?start=${uid}'); showToast('Скопировано!', 'success')"><i class="fas fa-copy"></i> Копировать</button>
+                </div>
+            `;
+        }
+
+        // ---- Админка ----
+        async function renderAdmin() {
+            // Получаем статистику и список пользователей
+            const stats = await apiCall(`admin/stats?admin=${uid}`);
+            const usersData = await apiCall(`admin/users?admin=${uid}&page=1&per_page=10`);
+            if (!stats || !usersData) return;
+
+            app.innerHTML = `
+                <div class="page-title">Панель администратора</div>
+                <div class="card">
+                    <h3>Статистика</h3>
+                    <p>👥 Пользователей: ${stats.total_users}</p>
+                    <p>🚫 Заблокировано: ${stats.total_banned}</p>
+                    <p>💰 Общий баланс: ${stats.total_balance.toFixed(2)} USD</p>
+                    <p>🎟️ Промокодов: ${stats.total_promos}</p>
+                    <p>📝 Операций: ${stats.total_history}</p>
+                </div>
+
+                <div class="card">
+                    <h3>Создать промокод</h3>
+                    <input id="promoCodeAdmin" class="input-field" placeholder="Код">
+                    <input id="promoAmount" type="number" class="input-field" placeholder="Сумма (USD)" step="0.01">
+                    <input id="promoUses" type="number" class="input-field" placeholder="Количество использований">
+                    <button class="btn" onclick="createPromo()"><i class="fas fa-plus"></i> Создать</button>
+                </div>
+
+                <div class="card">
+                    <h3>Последние пользователи</h3>
+                    ${usersData.users.map(u => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 10px; background: #0f172a; border-radius: 12px;">
+                            <div>
+                                <strong>${u.username || 'no username'}</strong> (ID: ${u.id})<br>
+                                Баланс: ${u.balance.toFixed(2)} USD ${u.banned ? '🚫' : ''}
+                            </div>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 14px;" onclick="adminAction(${u.id}, 'add_balance', 10)">+10</button>
+                                <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 14px;" onclick="adminAction(${u.id}, 'set_balance', prompt('Новый баланс:', ${u.balance}))">✏️</button>
+                                <button class="btn ${u.banned ? 'btn-success' : 'btn-danger'}" style="padding: 8px 12px; font-size: 14px;" onclick="adminAction(${u.id}, '${u.banned ? 'unban' : 'ban'}')">${u.banned ? '🔓' : '🔒'}</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        window.createPromo = async () => {
+            const code = document.getElementById('promoCodeAdmin').value.trim().toUpperCase();
+            const amount = parseFloat(document.getElementById('promoAmount').value);
+            const uses = parseInt(document.getElementById('promoUses').value);
+            if (!code || isNaN(amount) || isNaN(uses)) {
+                showToast('Заполните все поля', 'error');
+                return;
+            }
+            const res = await apiCall('admin/promocode', 'POST', { admin: uid, code, amount, uses });
+            if (res) {
+                showToast('Промокод создан', 'success');
+                renderAdmin();
+            }
+        };
+
+        window.adminAction = async (userId, action, value = null) => {
+            const res = await apiCall(`admin/user/${userId}`, 'POST', { admin: uid, action, value });
+            if (res) {
+                showToast('Действие выполнено', 'success');
+                renderAdmin();
+            }
+        };
+
+        // Инициализация
+        renderNav();
+        renderPage();
+
+        // Обработка закрытия
+        tg.onEvent('mainButtonClicked', () => {
+            tg.close();
+        });
+    </script>
+</body>
+</html>
