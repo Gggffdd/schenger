@@ -1,410 +1,118 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💎 IDEAL EXCHANGE</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.enableClosingConfirmation();
 
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: white;
-        }
+    const user = tg.initDataUnsafe.user;
+    if (!user) {
+        alert('Ошибка: не удалось получить данные пользователя');
+    }
 
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            padding-bottom: 100px;
-        }
+    const uid = user.id;
+    const username = user.username || 'user';
 
-        /* Карточки */
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s;
-        }
+    let currentPage = 'profile';
+    let rates = {
+        'USD': 1, 'EUR': 0.92, 'GBP': 0.79, 
+        'JPY': 150.5, 'RUB': 90.5, 'CNY': 7.2,
+        'CHF': 0.88, 'CAD': 1.35
+    };
 
-        .card:hover {
-            transform: translateY(-5px);
-        }
+    // Утилиты
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.borderLeftColor = type === 'success' ? '#84fab0' : (type === 'error' ? '#ff6b6b' : '#667eea');
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
 
-        /* Профиль */
-        .profile-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 4px solid white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            margin-bottom: 15px;
-        }
-
-        .username {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .balance {
-            font-size: 48px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 10px 0;
-        }
-
-        .balance small {
-            font-size: 18px;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* Кнопки */
-        .btn {
-            display: inline-block;
-            width: 100%;
-            padding: 18px;
-            border: none;
-            border-radius: 60px;
-            font-size: 16px;
-            font-weight: 600;
-            color: white;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            cursor: pointer;
-            transition: all 0.3s;
-            margin: 8px 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.5s, height 0.5s;
-        }
-
-        .btn:hover::before {
-            width: 400px;
-            height: 400px;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%);
-        }
-
-        /* Поля ввода */
-        .input-group {
-            margin: 15px 0;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 16px 20px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 60px;
-            color: white;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: white;
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .input-field::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        select.input-field {
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 20px center;
-            background-size: 20px;
-        }
-
-        /* Навигация */
-        .nav-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(20px);
-            display: flex;
-            justify-content: space-around;
-            padding: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .nav-item {
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-
-        .nav-item.active {
-            color: white;
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-5px);
-        }
-
-        .nav-item:hover {
-            color: white;
-        }
-
-        /* История */
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .history-item:last-child {
-            border-bottom: none;
-        }
-
-        .history-type {
-            font-weight: 600;
-            color: #f6d365;
-        }
-
-        .history-amount {
-            font-weight: 700;
-            color: #84fab0;
-        }
-
-        .history-date {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        /* Уведомления */
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 60px;
-            z-index: 1000;
-            animation: slideDown 0.3s ease;
-            border-left: 5px solid #667eea;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -20px);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, 0);
-            }
-        }
-
-        /* Анимация загрузки */
-        .loader {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 3px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Адаптивность */
-        @media (max-width: 480px) {
-            .balance {
-                font-size: 36px;
-            }
-            
-            .btn {
-                padding: 15px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container" id="app">
-        <div class="loader"></div>
-    </div>
-
-    <div class="nav-bar" id="navBar"></div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.enableClosingConfirmation();
-
-        const user = tg.initDataUnsafe.user;
-        if (!user) {
-            showToast('Ошибка: не удалось получить данные пользователя', 'error');
-        }
-
-        const uid = user.id;
-        const username = user.username || 'user';
-
-        let currentPage = 'profile';
-        let rates = {};
-
-        // Утилиты
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.style.borderLeftColor = type === 'success' ? '#84fab0' : (type === 'error' ? '#ff6b6b' : '#667eea');
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        async function apiCall(endpoint, method = 'GET', data = null) {
-            const url = `/api/${endpoint}`;
-            const options = {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            };
-
-            if (data) {
-                options.body = JSON.stringify(data);
-            }
-
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                const result = await response.json();
-
-                if (result.error) {
-                    showToast(result.error, 'error');
-                    return null;
-                }
-
-                return result;
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    showToast('Превышено время ожидания', 'error');
-                } else {
-                    showToast('Ошибка сети', 'error');
-                }
-                console.error('API Error:', error);
-                return null;
-            }
-        }
-
-        // Навигация
-        function renderNav() {
-            const pages = [
-                { id: 'profile', icon: 'fas fa-user', label: 'Профиль' },
-                { id: 'exchange', icon: 'fas fa-exchange-alt', label: 'Обмен' },
-                { id: 'promo', icon: 'fas fa-gift', label: 'Промо' },
-                { id: 'history', icon: 'fas fa-history', label: 'История' },
-                { id: 'referrals', icon: 'fas fa-users', label: 'Рефералы' }
-            ];
-
-            if (uid === 896706118) {
-                pages.push({ id: 'admin', icon: 'fas fa-cog', label: 'Админ' });
-            }
-
-            const navBar = document.getElementById('navBar');
-            navBar.innerHTML = pages.map(p => `
-                <button class="nav-item ${currentPage === p.id ? 'active' : ''}" onclick="navigate('${p.id}')">
-                    <i class="${p.icon}"></i>
-                </button>
-            `).join('');
-        }
-
-        window.navigate = (page) => {
-            currentPage = page;
-            renderNav();
-            renderPage();
+    async function apiCall(endpoint, method = 'GET', data = null) {
+        const url = `/api/${endpoint}`;
+        const options = {
+            method,
+            headers: { 'Content-Type': 'application/json' },
         };
 
-        // Загрузка курсов
-        async function loadRates() {
-            const data = await apiCall('rates');
-            if (data) rates = data;
+        if (data) {
+            options.body = JSON.stringify(data);
         }
-        loadRates();
 
-        // Рендер страниц
-        async function renderPage() {
-            const app = document.getElementById('app');
-            app.innerHTML = '<div class="loader"></div>';
+        // Добавляем таймаут
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        options.signal = controller.signal;
 
+        try {
+            const response = await fetch(url, options);
+            clearTimeout(timeoutId);
+            
+            const result = await response.json();
+            
+            if (result.error) {
+                showToast(result.error, 'error');
+                return null;
+            }
+            
+            return result;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                showToast('Превышено время ожидания', 'error');
+            } else {
+                showToast('Ошибка сети', 'error');
+            }
+            console.error('API Error:', error);
+            return null;
+        }
+    }
+
+    // Загрузка курсов (асинхронно, не блокируя интерфейс)
+    async function loadRates() {
+        const data = await apiCall('rates');
+        if (data) {
+            rates = { ...rates, ...data };
+        }
+    }
+    
+    // Загружаем курсы в фоне
+    setTimeout(loadRates, 100);
+
+    // Навигация
+    function renderNav() {
+        const pages = [
+            { id: 'profile', icon: 'fas fa-user', label: 'Профиль' },
+            { id: 'exchange', icon: 'fas fa-exchange-alt', label: 'Обмен' },
+            { id: 'promo', icon: 'fas fa-gift', label: 'Промо' },
+            { id: 'history', icon: 'fas fa-history', label: 'История' },
+            { id: 'referrals', icon: 'fas fa-users', label: 'Рефералы' }
+        ];
+
+        if (uid === 896706118) {
+            pages.push({ id: 'admin', icon: 'fas fa-cog', label: 'Админ' });
+        }
+
+        const navBar = document.getElementById('navBar');
+        navBar.innerHTML = pages.map(p => `
+            <button class="nav-item ${currentPage === p.id ? 'active' : ''}" onclick="navigate('${p.id}')">
+                <i class="${p.icon}"></i>
+            </button>
+        `).join('');
+    }
+
+    window.navigate = (page) => {
+        currentPage = page;
+        renderNav();
+        renderPage();
+    };
+
+    // Рендер страниц
+    async function renderPage() {
+        const app = document.getElementById('app');
+        app.innerHTML = '<div class="loader"></div>';
+
+        try {
             switch (currentPage) {
                 case 'profile':
                     await renderProfile();
@@ -428,365 +136,384 @@
                 default:
                     await renderProfile();
             }
-        }
-
-        // Профиль
-        async function renderProfile() {
-            const data = await apiCall(`user?id=${uid}&username=${username}`);
-            if (!data) return;
-
-            const app = document.getElementById('app');
+        } catch (error) {
+            console.error('Render error:', error);
             app.innerHTML = `
-                <div class="card">
-                    <div class="profile-header">
-                        <img class="avatar" 
-                             src="https://t.me/i/userpic/320/${username}.jpg" 
-                             onerror="this.src='https://via.placeholder.com/100'">
-                        <div class="username">@${username}</div>
-                        <div class="balance">${data.balance.toFixed(2)} <small>USD</small></div>
-                        ${data.bonus_available ? 
-                            '<button class="btn btn-success" onclick="claimDailyBonus()"><i class="fas fa-gift"></i> Ежедневный бонус</button>' : 
-                            '<button class="btn" disabled><i class="fas fa-check"></i> Бонус получен</button>'
-                        }
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Реферальная ссылка:</label>
-                        <input class="input-field" type="text" value="${data.referral_link}" readonly onclick="this.select()">
-                        <button class="btn" onclick="copyReferralLink()"><i class="fas fa-copy"></i> Копировать</button>
-                    </div>
+                <div class="card" style="text-align: center;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ff6b6b; margin: 20px;"></i>
+                    <p>Ошибка загрузки страницы</p>
+                    <button class="btn" onclick="renderPage()">Повторить</button>
                 </div>
             `;
         }
+    }
 
-        window.claimDailyBonus = async () => {
-            const result = await apiCall('daily_bonus', 'POST', { id: uid });
-            if (result) {
-                showToast(`Получено ${result.amount} USD!`, 'success');
-                renderProfile();
-            }
-        };
-
-        window.copyReferralLink = () => {
-            const link = document.querySelector('.input-field').value;
-            navigator.clipboard.writeText(link);
-            showToast('Ссылка скопирована!', 'success');
-        };
-
-        // Обмен
-        function renderExchange() {
-            const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'RUB', 'CNY', 'CHF', 'CAD'];
-            
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="card">
-                    <h2 style="margin-bottom: 20px; font-size: 28px;">💱 Обмен валюты</h2>
-                    
-                    <div class="input-group">
-                        <select id="fromCurrency" class="input-field">
-                            ${currencies.map(c => `<option value="${c}" ${c === 'USD' ? 'selected' : ''}>${c}</option>`).join('')}
-                        </select>
-                    </div>
-                    
-                    <div style="text-align: center; margin: 10px 0;">
-                        <i class="fas fa-arrow-down" style="font-size: 24px; opacity: 0.7;"></i>
-                    </div>
-                    
-                    <div class="input-group">
-                        <select id="toCurrency" class="input-field">
-                            ${currencies.map(c => `<option value="${c}" ${c === 'EUR' ? 'selected' : ''}>${c}</option>`).join('')}
-                        </select>
-                    </div>
-                    
-                    <div class="input-group">
-                        <input id="amount" type="number" class="input-field" placeholder="Сумма" min="0.01" step="0.01">
-                    </div>
-                    
-                    <div id="convertResult" style="font-size: 24px; font-weight: 700; text-align: center; margin: 20px 0; color: #84fab0;"></div>
-                    
-                    <button class="btn" onclick="convertPreview()">
-                        <i class="fas fa-calculator"></i> Предварительный расчёт
-                    </button>
-                    
-                    <button class="btn btn-success" onclick="doExchange()">
-                        <i class="fas fa-exchange-alt"></i> Выполнить обмен
-                    </button>
+    // Профиль
+    async function renderProfile() {
+        const data = await apiCall(`user?id=${uid}&username=${username}`);
+        if (!data) {
+            document.getElementById('app').innerHTML = `
+                <div class="card" style="text-align: center;">
+                    <i class="fas fa-sync-alt fa-spin" style="font-size: 48px; margin: 20px;"></i>
+                    <p>Повторная попытка...</p>
                 </div>
             `;
+            setTimeout(renderProfile, 2000);
+            return;
         }
 
-        window.convertPreview = async () => {
-            const from = document.getElementById('fromCurrency').value;
-            const to = document.getElementById('toCurrency').value;
-            const amount = parseFloat(document.getElementById('amount').value);
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div class="card">
+                <div class="profile-header">
+                    <img class="avatar" 
+                         src="https://t.me/i/userpic/320/${username}.jpg" 
+                         onerror="this.src='https://via.placeholder.com/100'">
+                    <div class="username">@${username}</div>
+                    <div class="balance">${data.balance.toFixed(2)} <small>USD</small></div>
+                    ${data.bonus_available ? 
+                        '<button class="btn btn-success" onclick="claimDailyBonus()"><i class="fas fa-gift"></i> Ежедневный бонус</button>' : 
+                        '<button class="btn" disabled><i class="fas fa-check"></i> Бонус получен</button>'
+                    }
+                </div>
+                
+                <div class="input-group">
+                    <label>Реферальная ссылка:</label>
+                    <input class="input-field" type="text" value="${data.referral_link}" readonly onclick="this.select()">
+                    <button class="btn" onclick="copyReferralLink()"><i class="fas fa-copy"></i> Копировать</button>
+                </div>
+            </div>
+        `;
+    }
 
-            if (!amount || amount <= 0) {
-                showToast('Введите сумму', 'error');
-                return;
-            }
+    window.claimDailyBonus = async () => {
+        const result = await apiCall('daily_bonus', 'POST', { id: uid });
+        if (result) {
+            showToast(`Получено ${result.amount} USD!`, 'success');
+            renderProfile();
+        }
+    };
 
-            const result = await apiCall('convert', 'POST', { from, to, amount });
-            if (result) {
-                document.getElementById('convertResult').innerHTML = 
-                    `${amount} ${from} = ${result.result} ${to}`;
-            }
-        };
+    window.copyReferralLink = () => {
+        const link = document.querySelector('.input-field').value;
+        navigator.clipboard.writeText(link);
+        showToast('Ссылка скопирована!', 'success');
+    };
 
-        window.doExchange = async () => {
-            const from = document.getElementById('fromCurrency').value;
-            const to = document.getElementById('toCurrency').value;
-            const amount = parseFloat(document.getElementById('amount').value);
+    // Обмен
+    function renderExchange() {
+        const currencies = Object.keys(rates);
+        
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div class="card">
+                <h2 style="margin-bottom: 20px; font-size: 28px;">💱 Обмен валюты</h2>
+                
+                <div class="input-group">
+                    <select id="fromCurrency" class="input-field">
+                        ${currencies.map(c => `<option value="${c}" ${c === 'USD' ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div style="text-align: center; margin: 10px 0;">
+                    <i class="fas fa-arrow-down" style="font-size: 24px; opacity: 0.7;"></i>
+                </div>
+                
+                <div class="input-group">
+                    <select id="toCurrency" class="input-field">
+                        ${currencies.map(c => `<option value="${c}" ${c === 'EUR' ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <input id="amount" type="number" class="input-field" placeholder="Сумма" min="0.01" step="0.01" value="1">
+                </div>
+                
+                <div id="convertResult" style="font-size: 24px; font-weight: 700; text-align: center; margin: 20px 0; color: #84fab0;">
+                    1 USD = ${rates['EUR']} EUR
+                </div>
+                
+                <button class="btn" onclick="convertPreview()">
+                    <i class="fas fa-calculator"></i> Предварительный расчёт
+                </button>
+                
+                <button class="btn btn-success" onclick="doExchange()">
+                    <i class="fas fa-exchange-alt"></i> Выполнить обмен
+                </button>
+            </div>
+        `;
+    }
 
-            if (!amount || amount <= 0) {
-                showToast('Введите сумму', 'error');
-                return;
-            }
+    window.convertPreview = () => {
+        const from = document.getElementById('fromCurrency').value;
+        const to = document.getElementById('toCurrency').value;
+        const amount = parseFloat(document.getElementById('amount').value) || 1;
 
-            const result = await apiCall('exchange', 'POST', { id: uid, from, to, amount });
-            if (result) {
-                showToast(`Обмен выполнен! Новый баланс: ${result.new_balance.toFixed(2)} USD`, 'success');
-                navigate('profile');
-            }
-        };
+        if (from === 'USD') {
+            const result = amount * (rates[to] || 1);
+            document.getElementById('convertResult').innerHTML = 
+                `${amount} ${from} = ${result.toFixed(2)} ${to}`;
+        } else if (to === 'USD') {
+            const result = amount / (rates[from] || 1);
+            document.getElementById('convertResult').innerHTML = 
+                `${amount} ${from} = ${result.toFixed(2)} ${to}`;
+        } else {
+            const inUSD = amount / (rates[from] || 1);
+            const result = inUSD * (rates[to] || 1);
+            document.getElementById('convertResult').innerHTML = 
+                `${amount} ${from} = ${result.toFixed(2)} ${to}`;
+        }
+    };
 
-        // Промокоды
-        function renderPromo() {
-            const app = document.getElementById('app');
+    window.doExchange = async () => {
+        const from = document.getElementById('fromCurrency').value;
+        const to = document.getElementById('toCurrency').value;
+        const amount = parseFloat(document.getElementById('amount').value);
+
+        if (!amount || amount <= 0) {
+            showToast('Введите сумму', 'error');
+            return;
+        }
+
+        const result = await apiCall('exchange', 'POST', { id: uid, from, to, amount });
+        if (result) {
+            showToast(`Обмен выполнен! Новый баланс: ${result.new_balance.toFixed(2)} USD`, 'success');
+            navigate('profile');
+        }
+    };
+
+    // Промокоды
+    function renderPromo() {
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div class="card">
+                <h2 style="margin-bottom: 20px; font-size: 28px;">🎁 Промокод</h2>
+                
+                <div class="input-group">
+                    <input id="promoCode" class="input-field" placeholder="Введите промокод">
+                </div>
+                
+                <button class="btn" onclick="activatePromo()">
+                    <i class="fas fa-ticket-alt"></i> Активировать
+                </button>
+            </div>
+        `;
+    }
+
+    window.activatePromo = async () => {
+        const code = document.getElementById('promoCode').value.trim().toUpperCase();
+        if (!code) {
+            showToast('Введите промокод', 'error');
+            return;
+        }
+
+        const result = await apiCall('promo', 'POST', { id: uid, code });
+        if (result) {
+            showToast(`Промокод активирован! +${result.amount} USD`, 'success');
+            navigate('profile');
+        }
+    };
+
+    // История
+    async function renderHistory() {
+        const history = await apiCall(`history?id=${uid}&limit=30`);
+        
+        const app = document.getElementById('app');
+        if (!history || history.length === 0) {
             app.innerHTML = `
-                <div class="card">
-                    <h2 style="margin-bottom: 20px; font-size: 28px;">🎁 Промокод</h2>
-                    
-                    <div class="input-group">
-                        <input id="promoCode" class="input-field" placeholder="Введите промокод">
-                    </div>
-                    
-                    <button class="btn" onclick="activatePromo()">
-                        <i class="fas fa-ticket-alt"></i> Активировать
-                    </button>
+                <div class="card" style="text-align: center;">
+                    <i class="fas fa-history" style="font-size: 48px; opacity: 0.5; margin: 20px;"></i>
+                    <p>История операций пуста</p>
                 </div>
             `;
+            return;
         }
 
-        window.activatePromo = async () => {
-            const code = document.getElementById('promoCode').value.trim().toUpperCase();
-            if (!code) {
-                showToast('Введите промокод', 'error');
-                return;
-            }
-
-            const result = await apiCall('promo', 'POST', { id: uid, code });
-            if (result) {
-                showToast(`Промокод активирован! +${result.amount} USD`, 'success');
-                navigate('profile');
-            }
-        };
-
-        // История
-        async function renderHistory() {
-            const history = await apiCall(`history?id=${uid}&limit=30`);
-            
-            const app = document.getElementById('app');
-            if (!history || history.length === 0) {
-                app.innerHTML = `
-                    <div class="card" style="text-align: center;">
-                        <i class="fas fa-history" style="font-size: 48px; opacity: 0.5; margin: 20px;"></i>
-                        <p>История операций пуста</p>
+        app.innerHTML = `
+            <div class="card">
+                <h2 style="margin-bottom: 20px; font-size: 28px;">📜 История</h2>
+                ${history.map(h => `
+                    <div class="history-item">
+                        <div>
+                            <div class="history-type">
+                                ${h.type === 'exchange' ? '💱 Обмен' : 
+                                  h.type === 'promo' ? '🎁 Промокод' : 
+                                  h.type === 'daily_bonus' ? '📅 Бонус' : 
+                                  '👥 Реферал'}
+                            </div>
+                            <div class="history-date">${new Date(h.date).toLocaleString()}</div>
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.5);">${h.details}</div>
+                        </div>
+                        <div class="history-amount">
+                            ${h.amount > 0 ? '+' : ''}${h.amount.toFixed(2)} ${h.currency}
+                        </div>
                     </div>
-                `;
-                return;
-            }
+                `).join('')}
+            </div>
+        `;
+    }
 
-            app.innerHTML = `
-                <div class="card">
-                    <h2 style="margin-bottom: 20px; font-size: 28px;">📜 История</h2>
-                    ${history.map(h => `
-                        <div class="history-item">
+    // Рефералы
+    async function renderReferrals() {
+        const stats = await apiCall(`referrals?id=${uid}`);
+        
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div class="card">
+                <h2 style="margin-bottom: 20px; font-size: 28px;">👥 Рефералы</h2>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <i class="fas fa-users" style="font-size: 64px; opacity: 0.7;"></i>
+                    <div style="font-size: 48px; font-weight: 800; margin: 20px 0; color: #84fab0;">
+                        ${stats?.count || 0}
+                    </div>
+                    <div style="font-size: 24px; margin-bottom: 30px;">
+                        Заработано: ${stats?.total_bonus?.toFixed(2) || '0.00'} USD
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Ваша реферальная ссылка:</label>
+                    <input class="input-field" type="text" value="https://t.me/your_bot?start=${uid}" readonly onclick="this.select()">
+                    <button class="btn" onclick="copyReferralLink()">
+                        <i class="fas fa-copy"></i> Копировать
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Админка
+    async function renderAdmin() {
+        const stats = await apiCall(`admin/stats?admin=${uid}`);
+        const usersData = await apiCall(`admin/users?admin=${uid}&page=1&per_page=10`);
+
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div class="card">
+                <h2 style="margin-bottom: 20px; font-size: 28px;">📊 Статистика</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; text-align: center;">
+                        <i class="fas fa-users" style="font-size: 24px; color: #84fab0;"></i>
+                        <div style="font-size: 24px; font-weight: 700;">${stats?.total_users || 0}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Пользователей</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; text-align: center;">
+                        <i class="fas fa-ban" style="font-size: 24px; color: #ff6b6b;"></i>
+                        <div style="font-size: 24px; font-weight: 700;">${stats?.total_banned || 0}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Заблокировано</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; text-align: center;">
+                        <i class="fas fa-coins" style="font-size: 24px; color: #f6d365;"></i>
+                        <div style="font-size: 24px; font-weight: 700;">${stats?.total_balance?.toFixed(2) || '0.00'}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Баланс USD</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; text-align: center;">
+                        <i class="fas fa-ticket-alt" style="font-size: 24px; color: #8fd3f4;"></i>
+                        <div style="font-size: 24px; font-weight: 700;">${stats?.total_promos || 0}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Промокодов</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 style="margin-bottom: 20px; font-size: 28px;">🎫 Создать промокод</h2>
+                
+                <div class="input-group">
+                    <input id="promoCodeAdmin" class="input-field" placeholder="Код промокода">
+                </div>
+                
+                <div class="input-group">
+                    <input id="promoAmount" type="number" class="input-field" placeholder="Сумма (USD)" step="0.01">
+                </div>
+                
+                <div class="input-group">
+                    <input id="promoUses" type="number" class="input-field" placeholder="Количество использований">
+                </div>
+                
+                <button class="btn" onclick="createPromo()">
+                    <i class="fas fa-plus"></i> Создать промокод
+                </button>
+            </div>
+
+            <div class="card">
+                <h2 style="margin-bottom: 20px; font-size: 28px;">👥 Пользователи</h2>
+                
+                ${usersData?.users?.map(u => `
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <div class="history-type">
-                                    ${h.type === 'exchange' ? '💱 Обмен' : 
-                                      h.type === 'promo' ? '🎁 Промокод' : 
-                                      h.type === 'daily_bonus' ? '📅 Бонус' : 
-                                      '👥 Реферал'}
-                                </div>
-                                <div class="history-date">${new Date(h.date).toLocaleString()}</div>
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.5);">${h.details}</div>
+                                <strong>${u.username || 'No username'}</strong>
+                                <div style="font-size: 12px; opacity: 0.7;">ID: ${u.id}</div>
                             </div>
-                            <div class="history-amount">
-                                ${h.amount > 0 ? '+' : ''}${h.amount.toFixed(2)} ${h.currency}
-                            </div>
+                            <div style="font-weight: 700; color: #84fab0;">${u.balance.toFixed(2)} USD</div>
                         </div>
-                    `).join('')}
-                </div>
-            `;
+                        <div style="display: flex; gap: 5px; margin-top: 10px;">
+                            <button class="btn" style="padding: 10px; font-size: 14px;" onclick="adminAction(${u.id}, 'add_balance', 10)">
+                                +10
+                            </button>
+                            <button class="btn" style="padding: 10px; font-size: 14px;" onclick="adminAction(${u.id}, 'add_balance', 100)">
+                                +100
+                            </button>
+                            <button class="btn" style="padding: 10px; font-size: 14px;" onclick="adminSetBalance(${u.id}, ${u.balance})">
+                                ✏️
+                            </button>
+                            <button class="btn ${u.banned ? 'btn-success' : 'btn-warning'}" 
+                                    style="padding: 10px; font-size: 14px;" 
+                                    onclick="adminAction(${u.id}, '${u.banned ? 'unban' : 'ban'}')">
+                                ${u.banned ? '🔓' : '🔒'}
+                            </button>
+                        </div>
+                    </div>
+                `).join('') || ''}
+            </div>
+        `;
+    }
+
+    window.createPromo = async () => {
+        const code = document.getElementById('promoCodeAdmin').value.trim().toUpperCase();
+        const amount = parseFloat(document.getElementById('promoAmount').value);
+        const uses = parseInt(document.getElementById('promoUses').value);
+
+        if (!code || isNaN(amount) || isNaN(uses) || amount <= 0 || uses <= 0) {
+            showToast('Заполните все поля корректно', 'error');
+            return;
         }
 
-        // Рефералы
-        async function renderReferrals() {
-            const stats = await apiCall(`referrals?id=${uid}`);
-            
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="card">
-                    <h2 style="margin-bottom: 20px; font-size: 28px;">👥 Рефералы</h2>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <i class="fas fa-users" style="font-size: 64px; opacity: 0.7;"></i>
-                        <div style="font-size: 48px; font-weight: 800; margin: 20px 0; color: #84fab0;">
-                            ${stats.count}
-                        </div>
-                        <div style="font-size: 24px; margin-bottom: 30px;">
-                            Заработано: ${stats.total_bonus.toFixed(2)} USD
-                        </div>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Ваша реферальная ссылка:</label>
-                        <input class="input-field" type="text" value="https://t.me/your_bot?start=${uid}" readonly onclick="this.select()">
-                        <button class="btn" onclick="copyReferralLink()">
-                            <i class="fas fa-copy"></i> Копировать
-                        </button>
-                    </div>
-                </div>
-            `;
+        const result = await apiCall('admin/promocode', 'POST', {
+            admin: uid,
+            code,
+            amount,
+            uses
+        });
+
+        if (result) {
+            showToast('Промокод создан!', 'success');
+            renderAdmin();
         }
+    };
 
-        // Админка
-        async function renderAdmin() {
-            const [stats, usersData] = await Promise.all([
-                apiCall(`admin/stats?admin=${uid}`),
-                apiCall(`admin/users?admin=${uid}&page=1&per_page=10`)
-            ]);
+    window.adminAction = async (userId, action, value = null) => {
+        const result = await apiCall(`admin/user/${userId}`, 'POST', {
+            admin: uid,
+            action,
+            value
+        });
 
-            if (!stats || !usersData) return;
-
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="card">
-                    <h2 style="margin-bottom: 20px; font-size: 28px;">📊 Статистика</h2>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; text-align: center;">
-                            <i class="fas fa-users" style="font-size: 24px; color: #84fab0;"></i>
-                            <div style="font-size: 24px; font-weight: 700;">${stats.total_users}</div>
-                            <div style="font-size: 12px; opacity: 0.7;">Пользователей</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; text-align: center;">
-                            <i class="fas fa-ban" style="font-size: 24px; color: #ff6b6b;"></i>
-                            <div style="font-size: 24px; font-weight: 700;">${stats.total_banned}</div>
-                            <div style="font-size: 12px; opacity: 0.7;">Заблокировано</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; text-align: center;">
-                            <i class="fas fa-coins" style="font-size: 24px; color: #f6d365;"></i>
-                            <div style="font-size: 24px; font-weight: 700;">${stats.total_balance.toFixed(2)}</div>
-                            <div style="font-size: 12px; opacity: 0.7;">Баланс USD</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; text-align: center;">
-                            <i class="fas fa-ticket-alt" style="font-size: 24px; color: #8fd3f4;"></i>
-                            <div style="font-size: 24px; font-weight: 700;">${stats.total_promos}</div>
-                            <div style="font-size: 12px; opacity: 0.7;">Промокодов</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2 style="margin-bottom: 20px; font-size: 28px;">🎫 Создать промокод</h2>
-                    
-                    <div class="input-group">
-                        <input id="promoCodeAdmin" class="input-field" placeholder="Код промокода">
-                    </div>
-                    
-                    <div class="input-group">
-                        <input id="promoAmount" type="number" class="input-field" placeholder="Сумма (USD)" step="0.01">
-                    </div>
-                    
-                    <div class="input-group">
-                        <input id="promoUses" type="number" class="input-field" placeholder="Количество использований">
-                    </div>
-                    
-                    <button class="btn" onclick="createPromo()">
-                        <i class="fas fa-plus"></i> Создать промокод
-                    </button>
-                </div>
-
-                <div class="card">
-                    <h2 style="margin-bottom: 20px; font-size: 28px;">👥 Пользователи</h2>
-                    
-                    ${usersData.users.map(u => `
-                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 10px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <strong>${u.username || 'No username'}</strong>
-                                    <div style="font-size: 12px; opacity: 0.7;">ID: ${u.id}</div>
-                                </div>
-                                <div style="font-weight: 700; color: #84fab0;">${u.balance.toFixed(2)} USD</div>
-                            </div>
-                            <div style="display: flex; gap: 5px; margin-top: 10px;">
-                                <button class="btn" style="padding: 10px; font-size: 14px;" onclick="adminAction(${u.id}, 'add_balance', 10)">
-                                    +10
-                                </button>
-                                <button class="btn" style="padding: 10px; font-size: 14px;" onclick="adminAction(${u.id}, 'add_balance', 100)">
-                                    +100
-                                </button>
-                                <button class="btn" style="padding: 10px; font-size: 14px;" onclick="adminSetBalance(${u.id}, ${u.balance})">
-                                    ✏️
-                                </button>
-                                <button class="btn ${u.banned ? 'btn-success' : 'btn-warning'}" 
-                                        style="padding: 10px; font-size: 14px;" 
-                                        onclick="adminAction(${u.id}, '${u.banned ? 'unban' : 'ban'}')">
-                                    ${u.banned ? '🔓' : '🔒'}
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+        if (result) {
+            showToast('Действие выполнено', 'success');
+            renderAdmin();
         }
+    };
 
-        window.createPromo = async () => {
-            const code = document.getElementById('promoCodeAdmin').value.trim().toUpperCase();
-            const amount = parseFloat(document.getElementById('promoAmount').value);
-            const uses = parseInt(document.getElementById('promoUses').value);
+    window.adminSetBalance = (userId, currentBalance) => {
+        const newBalance = prompt('Введите новый баланс:', currentBalance);
+        if (newBalance !== null) {
+            adminAction(userId, 'set_balance', parseFloat(newBalance));
+        }
+    };
 
-            if (!code || isNaN(amount) || isNaN(uses) || amount <= 0 || uses <= 0) {
-                showToast('Заполните все поля корректно', 'error');
-                return;
-            }
-
-            const result = await apiCall('admin/promocode', 'POST', {
-                admin: uid,
-                code,
-                amount,
-                uses
-            });
-
-            if (result) {
-                showToast('Промокод создан!', 'success');
-                renderAdmin();
-            }
-        };
-
-        window.adminAction = async (userId, action, value = null) => {
-            const result = await apiCall(`admin/user/${userId}`, 'POST', {
-                admin: uid,
-                action,
-                value
-            });
-
-            if (result) {
-                showToast('Действие выполнено', 'success');
-                renderAdmin();
-            }
-        };
-
-        window.adminSetBalance = (userId, currentBalance) => {
-            const newBalance = prompt('Введите новый баланс:', currentBalance);
-            if (newBalance !== null) {
-                adminAction(userId, 'set_balance', parseFloat(newBalance));
-            }
-        };
-
-        // Инициализация
-        renderNav();
-        renderPage();
-    </script>
-</body>
-</html>
+    // Инициализация
+    renderNav();
+    renderPage();
+</script>
