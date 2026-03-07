@@ -2,22 +2,27 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.py",
-      "use": "@vercel/python"
+      "src": "api/index.js",
+      "use": "@vercel/node"
     },
     {
-      "src": "webapp.html",
+      "src": "public/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.py"
+      "dest": "/api/index.js"
     },
     {
-      "src": "/",
-      "dest": "/webapp.html"
+      "src": "/(.*)",
+      "dest": "/public/$1"
     }
-  ]
+  ],
+  "env": {
+    "BOT_TOKEN": "7762911922:AAHdyGVZRwCkI_WtcGW1MPbIdhrcDBpKNvE",
+    "ADMIN_ID": "896706118",
+    "ADMIN_KEY": "8962"
+  }
 }
